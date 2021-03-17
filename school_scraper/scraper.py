@@ -22,7 +22,7 @@ def main():
     visited_url = set()
 
     # Pre-populate the queue
-    for (_, row) in raw_district_df.head(10).iterrows():
+    for (_, row) in raw_district_df.iterrows():
         scrape_queue += [{
             'base_school_name': row['School District Name'],
             'base_school_website': row['Website'],
