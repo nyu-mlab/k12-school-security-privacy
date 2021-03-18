@@ -6,6 +6,7 @@ import hashlib
 import os
 import json
 import datetime
+import random
 
 
 # Data from https://k12cybersecure.com/2019-year-in-review/
@@ -32,6 +33,8 @@ def main():
 
     # Go through the entire queue
     while scrape_queue:
+
+        random.shuffle(scrape_queue)
 
         info = scrape_queue.pop(0)
         
