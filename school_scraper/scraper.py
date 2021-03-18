@@ -12,7 +12,7 @@ import datetime
 BASE_PATH = 'https://hdanny.org/static/private_data/k12/'
 
 # A dataframe of "School District Name" and "Website"
-raw_district_df = pd.read_excel(BASE_PATH + 'SchoolDistrictswIncidents.xlsx')
+raw_district_df = pd.read_excel(BASE_PATH + 'SchoolDistrictswIncidents.xlsx').fillna('')
 
 
 def main():
