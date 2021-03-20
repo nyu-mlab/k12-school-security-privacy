@@ -98,12 +98,13 @@ def process_queue(scrape_queue, visited_url):
 
         # Explore more links
         for link in page['links']:
-            scrape_queue += [{
-                'base_school_name': info['base_school_name'],
-                'base_school_website': info['base_school_website'],
-                'visit_url': link,
-                'depth': info['depth'] + 1
-            }]
+            with lock:
+                scrape_queue += [{
+                    'base_school_name': info['base_school_name'],
+                    'base_school_website': info['base_school_website'],
+                    'visit_url': link,
+                    'depth': info['depth'] + 1
+                }]
 
 
 def parse_page(html):
