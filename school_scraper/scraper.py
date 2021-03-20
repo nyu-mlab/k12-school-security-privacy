@@ -55,7 +55,12 @@ def main():
             html = get_html(info['visit_url'])
         except Exception:
             continue
-        page = parse_page(html)
+
+        try:
+            page = parse_page(html)
+        except Exception:
+            continue
+        
         visited_url.add(info['visit_url'])
         
         # Save the info to disk
