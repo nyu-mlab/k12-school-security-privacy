@@ -20,7 +20,7 @@ raw_district_df = pd.read_excel(BASE_PATH + 'SchoolDistrictswIncidents.xlsx').fi
 lock = threading.Lock()
 
 
-THREAD_COUNT = 10
+THREAD_COUNT = 40
 
 
 def main():
