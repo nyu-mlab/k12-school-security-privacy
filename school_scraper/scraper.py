@@ -7,6 +7,7 @@ import os
 import json
 import datetime
 import random
+import threading
 
 
 # Data from https://k12cybersecure.com/2019-year-in-review/
@@ -14,6 +15,12 @@ BASE_PATH = 'https://hdanny.org/static/private_data/k12/'
 
 # A dataframe of "School District Name" and "Website"
 raw_district_df = pd.read_excel(BASE_PATH + 'SchoolDistrictswIncidents.xlsx').fillna('')
+
+
+lock = threading.Lock()
+
+
+THREAD_COUNT = 10
 
 
 def main():
@@ -31,20 +38,38 @@ def main():
             'depth': 0
         }]
 
+    # Start multiple threads
+    thread_list = []
+    for _ in range(THREAD_COUNT):
+        th = threading.Thread(target=process_queue, args=(scrape_queue, visited_url))
+        th.daemon = True
+        th.start()
+        thread_list.append(th)
+
+    # Wait for all threads to complete
+    for th in thread_list:
+        th.join()
+
+
+def process_queue(scrape_queue, visited_url):
+
     # Go through the entire queue
-    while scrape_queue:
+    while True:
 
-        random.shuffle(scrape_queue)
-
-        info = scrape_queue.pop(0)
+        with lock:
+            if len(scrape_queue) == 0:
+                return
+            random.shuffle(scrape_queue)
+            info = scrape_queue.pop(0)
         
         # Stop processing beyond Depth = 4
         if info['depth'] == 4:
             continue
 
         # Skip if we have scraped this URL before
-        if info['visit_url'] in visited_url:
-            continue
+        with lock:
+            if info['visit_url'] in visited_url:
+                continue
 
         # Ignore PDF docs
         if info['visit_url'].endswith('.pdf'):
@@ -60,14 +85,16 @@ def main():
             page = parse_page(html)
         except Exception:
             continue
-        
-        visited_url.add(info['visit_url'])
+
+        with lock:
+            visited_url.add(info['visit_url'])
         
         # Save the info to disk
         info['title'] = page['title']
         info['timestamp'] = str(datetime.datetime.now())
-        with open('output.json', 'a') as fp:
-            print(json.dumps(info), file=fp)
+        with lock:
+            with open('output.json', 'a') as fp:
+                print(json.dumps(info), file=fp)
 
         # Explore more links
         for link in page['links']:
