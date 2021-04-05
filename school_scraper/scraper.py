@@ -66,6 +66,7 @@ def process_queue(scrape_queue, visited_url):
                 return
             random.shuffle(scrape_queue)
             info = scrape_queue.pop(0)
+            queue_length = len(scrape_queue)
         
         # Stop processing beyond Depth = 10
         if info['depth'] == 10:
@@ -82,7 +83,7 @@ def process_queue(scrape_queue, visited_url):
 
         # Parse the page
         try:
-            html = get_html(info['visit_url'])
+            html = get_html(info['visit_url'], queue_length)
         except Exception:
             continue
 
@@ -141,7 +142,7 @@ def parse_page(html):
     }
 
 
-def get_html(url):
+def get_html(url, queue_length):
     """
     Obtains HTML from URL. If already visited, reads from disk.
 
@@ -151,7 +152,7 @@ def get_html(url):
     # Read from cache
     try:
         with open(cached_path) as fp:
-            print('Cached URL:', url)
+            print(f'{queue_length}: Cached URL:', url)
             return fp.read()
     except IOError:
         pass
@@ -169,7 +170,7 @@ def get_html(url):
     with open(cached_path, 'w') as fp:
         fp.write(html.decode('utf-8'))
 
-    print('Fetched URL:', url)
+    print(f'{queue_length}: Fetched URL:', url)
 
     return html
 
