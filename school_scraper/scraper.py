@@ -64,8 +64,7 @@ def process_queue(scrape_queue, visited_url):
         with lock:
             if len(scrape_queue) == 0:
                 return
-            random.shuffle(scrape_queue)
-            info = scrape_queue.pop(0)
+            info = scrape_queue.pop(random.randint(0, len(scrape_queue) - 1))
             queue_length = len(scrape_queue)
         
         # Stop processing beyond Depth = 10
