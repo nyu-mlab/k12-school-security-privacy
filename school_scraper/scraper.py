@@ -16,6 +16,9 @@ import sys
 subprocess.call(['mkdir', '-p', 'raw-data'])
 
 
+MAX_DEPTH = 5
+
+
 # Data from https://k12cybersecure.com/2019-year-in-review/
 BASE_PATH = 'https://hdanny.org/static/private_data/k12/'
 
@@ -51,9 +54,11 @@ def main():
         with open('queue.json') as fp:
             for line in fp:
                 try:
-                    scrape_queue.append(json.loads(line.strip()))
+                    q_element = json.loads(line.strip())                    
                 except json.decoder.JSONDecodeError:
                     continue
+            if q_element['depth'] < MAX_DEPTH:
+                scrape_queue.append(q_element)
     except IOError:
         pass
 
@@ -90,7 +95,7 @@ def process_queue(scrape_queue, visited_url):
                 continue
         
         # Stop processing beyond Depth
-        if info['depth'] >= 5:
+        if info['depth'] >= MAX_DEPTH:
             continue
 
         # Ignore PDF docs
