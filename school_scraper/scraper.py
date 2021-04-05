@@ -118,7 +118,7 @@ def process_queue(scrape_queue, visited_url):
             continue
 
         with lock:
-            with open('queue.json', 'w') as fp:
+            with open('queue.json', 'a') as fp:
                 for link in page['links']:            
                     q_element = {
                         'base_school_name': info['base_school_name'],
