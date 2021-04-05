@@ -25,7 +25,7 @@ raw_district_df = pd.read_excel(BASE_PATH + 'SchoolDistrictswIncidents.xlsx').fi
 lock = threading.Lock()
 
 
-THREAD_COUNT = 80
+THREAD_COUNT = 100
 
 
 def main():
@@ -162,7 +162,7 @@ def get_html(url):
     req.add_header('User-Agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36')
     
     # Visit the site
-    with urllib.request.urlopen(req, timeout=20) as response:
+    with urllib.request.urlopen(req, timeout=10) as response:
         html = response.read()  
 
     # Cache to disk
