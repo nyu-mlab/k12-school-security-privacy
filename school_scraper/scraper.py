@@ -57,6 +57,8 @@ def main():
     except IOError:
         pass
 
+    print('Queue length:', len(scrape_queue))
+
     # Start multiple threads
     thread_list = []
     for _ in range(thread_count):
