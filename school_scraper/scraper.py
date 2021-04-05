@@ -10,6 +10,7 @@ import random
 import threading
 import tldextract
 import subprocess
+import sys
 
 
 subprocess.call(['mkdir', '-p', 'raw-data'])
@@ -25,10 +26,12 @@ raw_district_df = pd.read_excel(BASE_PATH + 'SchoolDistrictswIncidents.xlsx').fi
 lock = threading.Lock()
 
 
-THREAD_COUNT = 100
-
-
 def main():
+
+    try:
+        thread_count = int(sys.argv[1])
+    except Exception:
+        thread_count = 30
 
     scrape_queue = []
 
@@ -43,9 +46,17 @@ def main():
             'depth': 0
         }]
 
+    # Resume from previous queue
+    try:
+        with open('queue.json') as fp:
+            for line in fp:
+                scrape_queue.append(json.loads(line.strip()))
+    except IOError:
+        pass
+
     # Start multiple threads
     thread_list = []
-    for _ in range(THREAD_COUNT):
+    for _ in range(thread_count):
         th = threading.Thread(target=process_queue, args=(scrape_queue, visited_url))
         th.daemon = True
         th.start()
@@ -62,19 +73,20 @@ def process_queue(scrape_queue, visited_url):
     while True:
 
         with lock:
+
+            # Randomly select an element from the queue
             if len(scrape_queue) == 0:
                 return
             info = scrape_queue.pop(random.randint(0, len(scrape_queue) - 1))
             queue_length = len(scrape_queue)
+
+            # Skip if we have scraped this URL before
+            if info['visit_url'] in visited_url:
+                continue
         
         # Stop processing beyond Depth = 10
         if info['depth'] == 10:
             continue
-
-        # Skip if we have scraped this URL before
-        with lock:
-            if info['visit_url'] in visited_url:
-                continue
 
         # Ignore PDF docs
         if info['visit_url'].endswith('.pdf'):
@@ -91,13 +103,11 @@ def process_queue(scrape_queue, visited_url):
         except Exception:
             continue
 
-        with lock:
-            visited_url.add(info['visit_url'])
-        
         # Save the info to disk
         info['title'] = page['title']
         info['timestamp'] = str(datetime.datetime.now())
         with lock:
+            visited_url.add(info['visit_url'])
             with open('output.json', 'a') as fp:
                 print(json.dumps(info), file=fp)
 
@@ -107,14 +117,17 @@ def process_queue(scrape_queue, visited_url):
         if visit_domain != district_domain:
             continue
 
-        for link in page['links']:
-            with lock:
-                scrape_queue += [{
-                    'base_school_name': info['base_school_name'],
-                    'base_school_website': info['base_school_website'],
-                    'visit_url': link,
-                    'depth': info['depth'] + 1
-                }]
+        with lock:
+            with open('queue.json', 'w') as fp:
+                for link in page['links']:            
+                    q_element = {
+                        'base_school_name': info['base_school_name'],
+                        'base_school_website': info['base_school_website'],
+                        'visit_url': link,
+                        'depth': info['depth'] + 1
+                    }
+                    scrape_queue.append(q_element)
+                    print(json.dumps(q_element), file=fp)
 
 
 def parse_page(html):
