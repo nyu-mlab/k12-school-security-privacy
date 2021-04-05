@@ -89,8 +89,8 @@ def process_queue(scrape_queue, visited_url):
             if info['visit_url'] in visited_url:
                 continue
         
-        # Stop processing beyond Depth = 10
-        if info['depth'] == 10:
+        # Stop processing beyond Depth
+        if info['depth'] >= 5:
             continue
 
         # Ignore PDF docs
