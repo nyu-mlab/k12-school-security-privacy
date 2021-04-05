@@ -57,8 +57,9 @@ def main():
                     q_element = json.loads(line.strip())                    
                 except json.decoder.JSONDecodeError:
                     continue
-            if q_element['depth'] < MAX_DEPTH:
-                scrape_queue.append(q_element)
+                else:
+                    if q_element['depth'] < MAX_DEPTH:
+                        scrape_queue.append(q_element)
     except IOError:
         pass
 
