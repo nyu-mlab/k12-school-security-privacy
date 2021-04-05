@@ -50,7 +50,10 @@ def main():
     try:
         with open('queue.json') as fp:
             for line in fp:
-                scrape_queue.append(json.loads(line.strip()))
+                try:
+                    scrape_queue.append(json.loads(line.strip()))
+                except json.decoder.JSONDecodeError:
+                    continue
     except IOError:
         pass
 
