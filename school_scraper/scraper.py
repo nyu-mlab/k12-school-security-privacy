@@ -122,9 +122,12 @@ def process_queue(scrape_queue, visited_url):
         if visit_domain != district_domain:
             continue
 
+        # Add links to queue
         with lock:
             with open('queue.json', 'a') as fp:
-                for link in page['links']:            
+                for link in page['links']:          
+                    if link in visited_url:
+                        continue  
                     q_element = {
                         'base_school_name': info['base_school_name'],
                         'base_school_website': info['base_school_website'],
