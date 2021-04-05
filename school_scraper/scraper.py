@@ -8,6 +8,11 @@ import json
 import datetime
 import random
 import threading
+import tldextract
+import subprocess
+
+
+subprocess.call(['mkdir', '-p', 'raw-data'])
 
 
 # Data from https://k12cybersecure.com/2019-year-in-review/
@@ -62,8 +67,8 @@ def process_queue(scrape_queue, visited_url):
             random.shuffle(scrape_queue)
             info = scrape_queue.pop(0)
         
-        # Stop processing beyond Depth = 4
-        if info['depth'] == 4:
+        # Stop processing beyond Depth = 10
+        if info['depth'] == 10:
             continue
 
         # Skip if we have scraped this URL before
@@ -96,7 +101,12 @@ def process_queue(scrape_queue, visited_url):
             with open('output.json', 'a') as fp:
                 print(json.dumps(info), file=fp)
 
-        # Explore more links
+        # Explore more links only if the current page shares the same domain as the district's
+        district_domain = tldextract.extract(info['base_school_website']).registered_domain
+        visit_domain = tldextract.extract(info['visit_url']).registered_domain
+        if visit_domain != district_domain:
+            continue
+
         for link in page['links']:
             with lock:
                 scrape_queue += [{
@@ -146,13 +156,18 @@ def get_html(url):
     except IOError:
         pass
 
+    # Add headers
+    req = urllib.request.Request(url)
+    req.add_header('Referer', 'https://www.google.com/')
+    req.add_header('User-Agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36')
+    
     # Visit the site
-    with urllib.request.urlopen(url) as response:
+    with urllib.request.urlopen(req, timeout=20) as response:
         html = response.read()  
 
     # Cache to disk
     with open(cached_path, 'w') as fp:
-        fp.write(str(html))
+        fp.write(html.decode('utf-8'))
 
     print('Fetched URL:', url)
 
