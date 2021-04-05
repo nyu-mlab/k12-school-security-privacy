@@ -127,6 +127,10 @@ def process_queue(scrape_queue, visited_url):
         if visit_domain != district_domain:
             continue
 
+        # Stop exploring if reaching max depth
+        if info['depth'] + 1 >= MAX_DEPTH:
+            continue
+        
         # Add links to queue
         with lock:
             with open('queue.json', 'a') as fp:
