@@ -16,7 +16,7 @@ import sys
 subprocess.call(['mkdir', '-p', 'raw-data'])
 
 
-MAX_DEPTH = 5
+MAX_DEPTH = 8
 
 
 # Data from https://k12cybersecure.com/2019-year-in-review/
