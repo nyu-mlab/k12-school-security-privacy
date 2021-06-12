@@ -3,3 +3,4 @@ xlrd
 openpyxl
 bs4
 tldextract
+waybackpy
