@@ -61,7 +61,7 @@ def main():
 
     #print(f'scrape queue:', scrape_queue)
 	
-
+    
     # Resume from previous queue
     try:
         with open('queue.json') as fp:
@@ -75,6 +75,7 @@ def main():
                         scrape_queue.append(q_element)
     except IOError:
         pass
+    
 
     #print('Queue length:', len(scrape_queue))
 
@@ -125,14 +126,17 @@ def process_queue(scrape_queue, visited_url):
 
         # Parse the page
         try:
+            #print(f"get_html: {info['visit_url']} year: {info['year']}")
             html = get_html(info['visit_url'], queue_length, info['year'])
         except Exception:
             #print(f"get html failed: {info['visit_url']}")
             continue
 
         try:
+            #print(f"parsing: {info['visit_url']} year: {info['year']}")
             page = parse_page(html)
         except Exception:
+            #print(f"parsing failed for {info['visit_url']}")
             continue
 
         # Save the info to disk
@@ -152,19 +156,16 @@ def process_queue(scrape_queue, visited_url):
 
         # Explore more links only if the current page shares the same domain as the district's
         district_domain = tldextract.extract(info['base_school_website']).registered_domain
-
-        if 'web.archive.org' in info['visit_url']:
+          
+        try:
             s = info['visit_url']
-            s2 = s.split('//')                
-            try:
-                visit_domain = tldextract.extract(s2[2]).registered_domain
-            except Exception:
-                visit_domain = tldextract.extract(info['visit_url']).registered_domain
-        else:
-            visit_domain = tldextract.extract(info['visit_url']).registered_domain
+            s2 = s.split('//') 
+            start_domain = tldextract.extract(s2[2]).registered_domain
+        except Exception:
+            start_domain = tldextract.extract(info['visit_url']).registered_domain
         
-        if visit_domain != district_domain:
-            print(f'visit_domain: {visit_domain} not equal to district_domain:{district_domain}')
+        if start_domain != district_domain:
+            #print(f'start_domain: {start_domain} not equal to district_domain:{district_domain}')
             continue
 
 
@@ -230,9 +231,11 @@ def get_html(url, queue_length, year):
         wayback = Url(url, user_agent)
         archive_version = wayback.near(year=year)
         url = archive_version.archive_url
-        
+        print(f"wayback url: {url}")
+    
+    
     cached_path = os.path.join('raw-data', hashlib.sha256(url.encode('utf-8')).hexdigest())
-
+    '''
     # Read from cache
     try:
         with open(cached_path) as fp:
@@ -240,7 +243,7 @@ def get_html(url, queue_length, year):
             return fp.read()
     except IOError:
         pass
-
+    '''
 
     # Add headers
     req = urllib.request.Request(url)
