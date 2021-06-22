@@ -22,7 +22,7 @@ subprocess.call(['mkdir', '-p', 'raw-data'])
 year = datetime.datetime.now().year
 
 # MAX_DEPTH = 8
-MAX_DEPTH = 8
+MAX_DEPTH = 3
 
 
 # Data from https://k12cybersecure.com/2019-year-in-review/
@@ -41,7 +41,7 @@ def main():
     try:
         thread_count = int(sys.argv[1])
     except Exception:
-        thread_count = 50
+        thread_count = 1
 
     scrape_queue = []
 
@@ -50,7 +50,7 @@ def main():
 
     # Pre-populate the queue
     for (_, row) in raw_district_df.iterrows():
-        for year in range(2019, 2022):
+        for year in range(2020, 2022):
             scrape_queue += [{
                 'base_school_name': row['School District Name'],
                 'base_school_website': row['Website'],
@@ -126,10 +126,10 @@ def process_queue(scrape_queue, visited_url):
 
         # Parse the page
         try:
-            #print(f"get_html: {info['visit_url']} year: {info['year']}")
+            print(f"trying to get_html: {info['visit_url']} year: {info['year']}")
             html = get_html(info['visit_url'], queue_length, info['year'])
         except Exception:
-            #print(f"get html failed: {info['visit_url']}")
+            print(f"get html failed: {info['visit_url']} year: {info['year']}")
             continue
 
         try:
@@ -225,13 +225,13 @@ def get_html(url, queue_length, year):
     Obtains HTML from URL. If already visited, reads from disk.
 
     """
-    if year != '2021':
-        #wayback stuff
-        user_agent = 'User-Agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
-        wayback = Url(url, user_agent)
-        archive_version = wayback.near(year=year)
-        url = archive_version.archive_url
-        print(f"wayback url: {url}")
+    #if year != '2021':
+    #wayback stuff
+    user_agent = 'User-Agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
+    wayback = Url(url, user_agent)
+    archive_version = wayback.near(year=year)
+    url = archive_version.archive_url
+    print(f"wayback url: {url}")
     
     
     cached_path = os.path.join('raw-data', hashlib.sha256(url.encode('utf-8')).hexdigest())
@@ -244,7 +244,7 @@ def get_html(url, queue_length, year):
     except IOError:
         pass
     '''
-
+    #print(f"url: {url}")
     # Add headers
     req = urllib.request.Request(url)
     req.add_header('Referer', 'https://www.google.com/')
@@ -258,7 +258,7 @@ def get_html(url, queue_length, year):
     with open(cached_path, 'w') as fp:
         fp.write(html.decode('utf-8'))
 
-    # print(f'{queue_length}: Fetched URL: {url}  year:{year}')
+    print(f'{queue_length}: Fetched URL: {url}  year:{year}')
     #print(f'{queue_length}: Fetched URL:', url)
 
     return html
