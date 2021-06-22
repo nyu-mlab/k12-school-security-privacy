@@ -21,17 +21,15 @@ subprocess.call(['mkdir', '-p', 'raw-data'])
 
 year = datetime.datetime.now().year
 
-# MAX_DEPTH = 8
-MAX_DEPTH = 3
-
+MAX_DEPTH = 8
 
 # Data from https://k12cybersecure.com/2019-year-in-review/
-# BASE_PATH = 'https://hdanny.org/static/private_data/k12/'
-BASE_PATH = '/home/kali/Documents/PhD/'
+BASE_PATH = 'https://hdanny.org/static/private_data/k12/'
+#BASE_PATH = '/home/kali/Documents/PhD/'
 
 # A dataframe of "School District Name" and "Website"
-# raw_district_df = pd.read_excel(BASE_PATH + 'SchoolDistrictswIncidents.xlsx').fillna('')
-raw_district_df = pd.read_excel(BASE_PATH + 'SchoolDistrictswIncidents-trim.xlsx').fillna('')
+raw_district_df = pd.read_excel(BASE_PATH + 'SchoolDistrictswIncidents.xlsx').fillna('')
+#raw_district_df = pd.read_excel(BASE_PATH + 'SchoolDistrictswIncidents-trim.xlsx').fillna('')
 
 lock = threading.Lock()
 
@@ -41,7 +39,7 @@ def main():
     try:
         thread_count = int(sys.argv[1])
     except Exception:
-        thread_count = 1
+        thread_count = 50
 
     scrape_queue = []
 
@@ -50,7 +48,7 @@ def main():
 
     # Pre-populate the queue
     for (_, row) in raw_district_df.iterrows():
-        for year in range(2020, 2022):
+        for year in range(2018, 2022):
             scrape_queue += [{
                 'base_school_name': row['School District Name'],
                 'base_school_website': row['Website'],
@@ -121,15 +119,15 @@ def process_queue(scrape_queue, visited_url):
             continue
 
         # Ignore Telephone numbers
-        if info['visit_url'].startswith('Tel'):
+        if info['visit_url'].find('Tel:') != -1:
             continue
 
         # Parse the page
         try:
-            print(f"trying to get_html: {info['visit_url']} year: {info['year']}")
+            #print(f"trying to get_html: {info['visit_url']} year: {info['year']}")
             html = get_html(info['visit_url'], queue_length, info['year'])
         except Exception:
-            print(f"get html failed: {info['visit_url']} year: {info['year']}")
+            #print(f"get html failed: {info['visit_url']} year: {info['year']}")
             continue
 
         try:
@@ -221,21 +219,18 @@ def parse_page(html):
 
 
 def get_html(url, queue_length, year):
-    """
-    Obtains HTML from URL. If already visited, reads from disk.
+    #Obtains HTML from URL. If already visited, reads from disk.
 
-    """
-    #if year != '2021':
-    #wayback stuff
-    user_agent = 'User-Agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
-    wayback = Url(url, user_agent)
-    archive_version = wayback.near(year=year)
-    url = archive_version.archive_url
-    print(f"wayback url: {url}")
+    if url.find('web.archive.org:') != -1:
+        user_agent = 'User-Agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
+        wayback = Url(url, user_agent)
+        archive_version = wayback.near(year=year)
+        url = archive_version.archive_url
     
+    #print(f"wayback url: {url}")
     
     cached_path = os.path.join('raw-data', hashlib.sha256(url.encode('utf-8')).hexdigest())
-    '''
+    
     # Read from cache
     try:
         with open(cached_path) as fp:
@@ -243,7 +238,7 @@ def get_html(url, queue_length, year):
             return fp.read()
     except IOError:
         pass
-    '''
+    
     #print(f"url: {url}")
     # Add headers
     req = urllib.request.Request(url)
@@ -258,8 +253,7 @@ def get_html(url, queue_length, year):
     with open(cached_path, 'w') as fp:
         fp.write(html.decode('utf-8'))
 
-    print(f'{queue_length}: Fetched URL: {url}  year:{year}')
-    #print(f'{queue_length}: Fetched URL:', url)
+    #print(f'{queue_length}: Fetched URL: {url}  year:{year}')
 
     return html
 
