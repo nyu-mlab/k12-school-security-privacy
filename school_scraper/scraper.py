@@ -13,11 +13,10 @@ import threading
 import tldextract
 import subprocess
 import sys
-import waybackpy
 from waybackpy import Url
 
 
-subprocess.call(['mkdir', '-p', 'raw-data'])
+subprocess.call(['mkdir', '-p', 'test-raw-data'])
 
 year = datetime.datetime.now().year
 
@@ -48,7 +47,7 @@ def main():
 
     # Pre-populate the queue
     for (_, row) in raw_district_df.iterrows():
-        for year in range(2018, 2022):
+        for year in range(2017, 2022):
             scrape_queue += [{
                 'base_school_name': row['School District Name'],
                 'base_school_website': row['Website'],
@@ -125,7 +124,7 @@ def process_queue(scrape_queue, visited_url):
         # Parse the page
         try:
             #print(f"trying to get_html: {info['visit_url']} year: {info['year']}")
-            html = get_html(info['visit_url'], queue_length, info['year'])
+            html = get_html(info['visit_url'], queue_length, info['year'], info['depth'])
         except Exception:
             #print(f"get html failed: {info['visit_url']} year: {info['year']}")
             continue
@@ -155,15 +154,14 @@ def process_queue(scrape_queue, visited_url):
         # Explore more links only if the current page shares the same domain as the district's
         district_domain = tldextract.extract(info['base_school_website']).registered_domain
           
-        try:
-            s = info['visit_url']
-            s2 = s.split('//') 
-            start_domain = tldextract.extract(s2[2]).registered_domain
-        except Exception:
-            start_domain = tldextract.extract(info['visit_url']).registered_domain
+        visited_domain = tldextract.extract(info['visit_url']).registered_domain
+        if info['visit_url'].startswith('https://web.archive.org/'):
+            try:    
+                visited_domain = tldextract.extract(info['visit_url'].split('//')[2]).registered_domain
+            except Exception:
+                pass
         
-        if start_domain != district_domain:
-            #print(f'start_domain: {start_domain} not equal to district_domain:{district_domain}')
+        if visited_domain != district_domain:
             continue
 
 
@@ -175,8 +173,7 @@ def process_queue(scrape_queue, visited_url):
         with lock:
             with open('queue.json', 'a') as fp:
                 for link in page['links']:          
-                    #changed lookup to a tuple
-                    #print(f'link: ', link)
+                    #changed lookup to a tuple                    
                     if (link,info['year']) in visited_url:
                         continue  
                     q_element = {
@@ -218,28 +215,28 @@ def parse_page(html):
     }
 
 
-def get_html(url, queue_length, year):
+def get_html(url, queue_length, year, depth):
     #Obtains HTML from URL. If already visited, reads from disk.
 
-    if url.find('web.archive.org:') != -1:
+    if year != 2021 and (not url.startswith('https://web.archive.org:')):
         user_agent = 'User-Agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
         wayback = Url(url, user_agent)
-        archive_version = wayback.near(year=year)
+        archive_version = wayback.near(year=year, month=1, day=1)
         url = archive_version.archive_url
     
-    #print(f"wayback url: {url}")
+    # print(f"wayback url: {url}")
     
-    cached_path = os.path.join('raw-data', hashlib.sha256(url.encode('utf-8')).hexdigest())
+    cached_path = os.path.join('test-raw-data', hashlib.sha256(url.encode('utf-8')).hexdigest())
     
     # Read from cache
     try:
         with open(cached_path) as fp:
-            #print(f'{queue_length}: Cached URL:', archive_url)
+            print(f'{queue_length}: Cached URL: {url} @ year {year} @ depth {depth}')
             return fp.read()
     except IOError:
         pass
     
-    #print(f"url: {url}")
+    # print(f"url: {url}")
     # Add headers
     req = urllib.request.Request(url)
     req.add_header('Referer', 'https://www.google.com/')
@@ -253,7 +250,7 @@ def get_html(url, queue_length, year):
     with open(cached_path, 'w') as fp:
         fp.write(html.decode('utf-8'))
 
-    #print(f'{queue_length}: Fetched URL: {url}  year:{year}')
+    print(f'{queue_length}: Fetched URL: {url} @ year {year} @ depth {depth}')
 
     return html
 
