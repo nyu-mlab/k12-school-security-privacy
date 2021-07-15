@@ -157,7 +157,7 @@ def process_queue(scrape_queue, visited_url):
         visited_domain = tldextract.extract(info['visit_url']).registered_domain
         if info['visit_url'].startswith('https://web.archive.org/'):
             try:    
-                visited_domain = tldextract.extract(info['visit_url'].split('//')[2]).registered_domain
+                visited_domain = tldextract.extract(info['visit_url'].split('//', 2)[2]).registered_domain
             except Exception:
                 pass
         
@@ -218,7 +218,7 @@ def parse_page(html):
 def get_html(url, queue_length, year, depth):
     #Obtains HTML from URL. If already visited, reads from disk.
 
-    if year != 2021 and (not url.startswith('https://web.archive.org:')):
+    if year != 2021 and (not url.startswith('https://web.archive.org')):
         user_agent = 'User-Agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
         wayback = Url(url, user_agent)
         archive_version = wayback.near(year=year, month=1, day=1)
