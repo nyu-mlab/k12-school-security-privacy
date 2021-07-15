@@ -1,2 +1,5 @@
 .vscode/
 env/
+raw-data/
+output.json
+queue.json
