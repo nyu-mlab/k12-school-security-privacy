@@ -3,3 +3,7 @@ python3 -m venv env
 source env/bin/activate
 pip install -r requirements.txt
 python scraper.py
+
+
+
+ssh root@45.55.61.16
