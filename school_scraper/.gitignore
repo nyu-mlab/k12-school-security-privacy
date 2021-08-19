@@ -1,5 +1,6 @@
 .vscode/
 env/
 raw-data/
+test-raw-data/
 output.json
 queue.json

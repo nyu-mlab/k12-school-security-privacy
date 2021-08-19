@@ -23,11 +23,13 @@ year = datetime.datetime.now().year
 MAX_DEPTH = 8
 
 # Data from https://k12cybersecure.com/2019-year-in-review/
-BASE_PATH = 'https://hdanny.org/static/private_data/k12/'
+#BASE_PATH = 'https://hdanny.org/static/private_data/k12/'
 #BASE_PATH = '/home/kali/Documents/PhD/'
+BASE_PATH = '/home/kali/Documents/PhD/k12-school-security-privacy/school_scraper/'
 
 # A dataframe of "School District Name" and "Website"
-raw_district_df = pd.read_excel(BASE_PATH + 'SchoolDistrictswIncidents.xlsx').fillna('')
+raw_district_df = pd.read_excel(BASE_PATH + 'NCES.xlsx').fillna('')
+#raw_district_df = pd.read_excel(BASE_PATH + 'SchoolDistrictswIncidents.xlsx').fillna('')
 #raw_district_df = pd.read_excel(BASE_PATH + 'SchoolDistrictswIncidents-trim.xlsx').fillna('')
 
 lock = threading.Lock()
@@ -49,7 +51,7 @@ def main():
     for (_, row) in raw_district_df.iterrows():
         for year in range(2017, 2022):
             scrape_queue += [{
-                'base_school_name': row['School District Name'],
+                'base_school_name': row['School Name'],
                 'base_school_website': row['Website'],
                 'visit_url': row['Website'],
                 'depth': 0,
