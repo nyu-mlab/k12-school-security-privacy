@@ -16,7 +16,7 @@ import sys
 from waybackpy import Url
 
 
-subprocess.call(['mkdir', '-p', 'test-raw-data'])
+subprocess.call(['mkdir', '-p', 'raw-data'])
 
 year = datetime.datetime.now().year
 
@@ -40,7 +40,7 @@ def main():
     try:
         thread_count = int(sys.argv[1])
     except Exception:
-        thread_count = 50
+        thread_count = 25
 
     scrape_queue = []
 
@@ -49,7 +49,7 @@ def main():
 
     # Pre-populate the queue
     for (_, row) in raw_district_df.iterrows():
-        for year in range(2017, 2022):
+        for year in range(2020, 2022):
             scrape_queue += [{
                 'base_school_name': row['School Name'],
                 'base_school_website': row['Website'],
